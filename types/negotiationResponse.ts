@@ -42,6 +42,7 @@ export type FinalResultMessage = {
     title: string;
     final_price: number;
     final_decision: string;
+    final_vendor: string;
     turn_reached: number;
     buyer_constraints:{
         buget: string;

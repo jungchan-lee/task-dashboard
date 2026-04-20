@@ -12,7 +12,7 @@ export default function MessageList({ messages }: Props) {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
-  const [selectedReport, setSelectedReport] = useState("");
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null); // Message 전체를 저장
 
   const visibleMessages = messages.filter(msg => msg.meta?.type !== "DECISION");
 
@@ -45,7 +45,7 @@ export default function MessageList({ messages }: Props) {
             <div key={`final-${i}`} className="flex justify-center my-10 animate-bubble">
               <button 
                 onClick={() => {
-                  setSelectedReport(msg.content);
+                  setSelectedMessage(msg);
                   setIsReceiptOpen(true);
                 }}
                 className="group relative flex flex-col items-center gap-4 bg-white border-2 border-[#1a4d3a] p-8 rounded-[32px] shadow-xl hover:scale-105 transition-all duration-300"
@@ -97,7 +97,7 @@ export default function MessageList({ messages }: Props) {
       <ReceiptModal 
         isOpen={isReceiptOpen} 
         onClose={() => setIsReceiptOpen(false)} 
-        content={selectedReport} 
+        message={selectedMessage} 
       />
     </div>
   );

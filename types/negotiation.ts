@@ -15,6 +15,8 @@ export type Message = {
       final_decision: string;
       turn_reached: number;
       decision_reason: string;
+      final_price: number;
+      final_vendor: string;
     };
   };
 };

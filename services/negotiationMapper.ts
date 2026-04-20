@@ -62,6 +62,8 @@ export class NegotiationMapper {
                 final_decision: data.summary.final_decision, // "REJECT" 또는 "ACCEPT"
                 turn_reached: data.summary.turn_reached,
                 decision_reason: data.summary.decision_reason,
+                final_price: data.summary.final_price,
+                final_vendor: data.summary.final_vendor
             },
             },
         };

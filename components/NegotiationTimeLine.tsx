@@ -60,6 +60,23 @@ export default function NegotiationTimeline({ messages }: Props) {
     return null;
   }, [messages]);
 
+    // 🟢 2-1. BUYER가 활성화 상태인지 확인하는 로직 추가
+  const isBuyerActive = useMemo(() => {
+    if (messages.length === 0) return false; // 초기 상태는 BUYER부터
+    
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage.meta?.type === "FINAL_RESULT") return false;
+
+    // 마지막으로 확인된 TURN_UPDATE가 BUYER인 경우
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.meta?.type === "TURN_UPDATE") {
+        return m.role?.toUpperCase() === "BUYER" || m.role?.toUpperCase() === "USER";
+      }
+    }
+    return false;
+  }, [messages]);
+
   const activeIndex = vendors.findIndex(v => v.id === activeVendorId);
 
   return (
@@ -68,22 +85,43 @@ export default function NegotiationTimeline({ messages }: Props) {
         
         <div className="absolute h-[1px] bg-gray-200 left-8 right-8 top-[48%] -translate-y-1/2 z-0" />
 
-        {/* 하이라이트 선 */}
+        {/* 🟢 하이라이트 선 로직 수정 */}
         <div 
-          className="absolute h-[2.5px] bg-[#1a4d3a] left-8 top-[48%] -translate-y-1/2 z-0 transition-all duration-700 ease-in-out"
-          style={{ 
+        className="absolute h-[2.5px] bg-[#1a4d3a] left-8 top-[48%] -translate-y-1/2 z-0 transition-all duration-700 ease-in-out"
+        style={{ 
             width: activeIndex >= 0 
-              ? `calc(50% + ${(activeIndex + 1) * (45 / (vendors.length || 1))}% )` 
-              : "0%" 
-          }}
+            ? `calc(50% + ${(activeIndex + 1) * (45 / (vendors.length || 1))}% )` 
+            // 🟢 50%에서 중앙 아이콘 너비의 절반(약 20px) 정도를 빼주면 딱 맞습니다.
+            : isBuyerActive ? "32%" : "0%" 
+        }}
         />
 
-        {/* BUYER */}
-        <div className="flex flex-col items-center gap-3 w-24 z-10 bg-[#f6faf9] py-2">
-          <div className="w-16 h-16 rounded-full bg-white border border-gray-100 flex items-center justify-center shadow-sm">
-            <User size={28} className="text-gray-600" />
+        {/* 🟢 BUYER 영역 하이라이트 적용 */}
+        <div className="flex flex-col items-center gap-3 w-24 z-10 bg-[#f6faf9] py-2 relative">
+          <div className={`
+            w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500 bg-white
+            ${isBuyerActive 
+              ? "border-[3.5px] border-[#1a4d3a] shadow-[0_10px_20px_rgba(26,77,58,0.2)] scale-110 -translate-y-3" 
+              : "border border-gray-100 opacity-20 scale-95"
+            }
+          `}>
+            <User 
+              size={28} 
+              className={isBuyerActive ? "text-[#1a4d3a] stroke-[2.5px]" : "text-gray-300"} 
+            />
+            {/* BUYER 활성화 뱃지 */}
+            {isBuyerActive && (
+              <div className="absolute -bottom-18 bg-[#1a4d3a] text-white text-[9px] font-bold px-3 py-1 rounded-full shadow-md z-20">
+                ACTIVE
+              </div>
+            )}
           </div>
-          <span className="text-[11px] font-bold text-gray-400">YOU (BUYER)</span>
+          <span className={`
+            text-[11px] transition-all duration-500 whitespace-nowrap z-10
+            ${isBuyerActive ? "text-[#1a4d3a] font-black scale-105" : "text-gray-300 font-medium"}
+          `}>
+            YOU (BUYER)
+          </span>
         </div>
 
         {/* 중앙 아이콘 */}
