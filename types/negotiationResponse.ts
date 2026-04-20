@@ -4,9 +4,10 @@ export type WSType = "TURN_UPDATE" | "INFO" | "DECISION" | "FINAL_RESULT";
 
 export type TurnUpdateMessage = {
   type: "TURN_UPDATE";
-  sender: "BUYER" | "VENDOR";
+  sender: "BUYER" | "VENDOR" | string;
   content: string;
   turn: number;
+  receiver: string[];
 };
 
 export type InfoMessage = {

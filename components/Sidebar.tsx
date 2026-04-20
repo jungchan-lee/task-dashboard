@@ -13,51 +13,53 @@ export default function Sidebar({ messages }: SidebarProps) {
     return price.toLocaleString('ko-KR');
   };
 
-  // 2. DECISION 로그 추출
+  // 🟢 수정: DECISION(협상 중) 또는 FINAL_RESULT(협상 완료) 로그 모두 추출
   const historyLogs = useMemo(() => 
-    messages.filter(m => m.meta?.type === "DECISION"), 
+    messages.filter(m => m.meta?.type === "DECISION" || m.meta?.type === "FINAL_RESULT"), 
     [messages]
   );
 
-  // 2. 마켓 범위(Min/Max) 및 현재 위치(Percentage) 계산
-  const { marketLow, marketHigh, CurrentPrice, positionPercent } = useMemo(() => {
+  // 🟢 Helper: 메시지 타입에 따른 올바른 가격 추출 (price 또는 final_price)
+  const getPriceFromLog = (log: Message) => {
+    return log.meta?.type === "FINAL_RESULT" 
+      ? log.meta?.summary?.final_price || 0 
+      : log.meta?.price || 0;
+  };
+
+  // 2. 마켓 범위 및 현재 위치 계산
+  const { marketLow, marketHigh, positionPercent } = useMemo(() => {
     if (historyLogs.length === 0) {
-      return { marketLow: 0, marketHigh: 0, CurrentPrice: 0, positionPercent: 0 };
+      return { marketLow: 0, marketHigh: 0, positionPercent: 0 };
     }
 
-    // 모든 로그에서 price 값들만 추출
-    const allPrices = historyLogs.map(log => log.meta?.price || 0);
+    // 🟢 모든 로그에서 적절한 가격 추출
+    const allPrices = historyLogs.map(log => getPriceFromLog(log));
     const current = allPrices[allPrices.length - 1];
     
-    // 실시간 최소/최대값 갱신
     const min = Math.min(...allPrices);
     const max = Math.max(...allPrices);
 
-    // 핸들 위치 계산 (분모가 0이 되는 것 방지)
     const range = max - min;
     const percent = range === 0 ? 50 : ((current - min) / range) * 100;
 
     return { 
       marketLow: min, 
       marketHigh: max, 
-      currentPrice: current, 
       positionPercent: percent 
     };
   }, [historyLogs]);
 
-  // 3. 현재 가격, 트렌드, 그리고 차액(diff) 계산
+  // 3. 현재 가격, 트렌드, 차액 계산
   const { currentPrice, trend, diff } = useMemo(() => {
-    const logs = historyLogs;
-    // 데이터가 없을 때 기본값
-    if (logs.length === 0) return { currentPrice: 0, trend: "none", diff: 0 };
+    if (historyLogs.length === 0) return { currentPrice: 0, trend: "none", diff: 0 };
 
-    const current = logs[logs.length - 1].meta?.price || 0;
+    // 🟢 최신 가격 추출 (협상 완료 시 final_price 반영)
+    const current = getPriceFromLog(historyLogs[historyLogs.length - 1]);
     
-    // 이전 기록이 없는 경우 (첫 번째 제안일 때)
-    if (logs.length < 2) return { currentPrice: current, trend: "none", diff: 0 };
+    if (historyLogs.length < 2) return { currentPrice: current, trend: "none", diff: 0 };
 
-    const previous = logs[logs.length - 2].meta?.price || 0;
-    const difference = Math.abs(current - previous); // 절댓값 계산
+    const previous = getPriceFromLog(historyLogs[historyLogs.length - 2]);
+    const difference = Math.abs(current - previous);
 
     if (current > previous) return { currentPrice: current, trend: "up", diff: difference };
     if (current < previous) return { currentPrice: current, trend: "down", diff: difference };
@@ -105,8 +107,8 @@ export default function Sidebar({ messages }: SidebarProps) {
           </div>
         </div>
 
-        {/* 🔹 동적 마켓 바 영역 (하단 간격 조정) */}
-        <div className="px-1 mb-4"> {/* mb-8에서 mb-4로 줄여서 로그를 위로 올림 */}
+        {/* 🔹 동적 마켓 바 영역 */}
+        <div className="px-1 mb-4">
           <div className="flex justify-between text-[11px] font-bold text-gray-400 mb-2 tracking-widest">
             <div className="flex flex-col">
               <span>MARKET LOW</span>
@@ -136,41 +138,39 @@ export default function Sidebar({ messages }: SidebarProps) {
           </div>
         </div>
 
-        {/* 히스토리 로그 섹션 (상단 여백 최적화) */}
-        <div className="flex-1 flex flex-col min-h-0 px-1"> {/* pt-6에서 pt-2로 조정 */}
-          {/* 📌 제목 영역: 간격 mb-6에서 mb-4로 조정 */}
+        {/* 히스토리 로그 섹션 */}
+        <div className="flex-1 flex flex-col min-h-0 px-1">
           <div className="text-[11px] font-bold text-gray-400 mb-4 tracking-widest flex-shrink-0">
               HISTORY LOG
           </div>
 
-         {/* 📜 로그 목록 영역 */}
         <div className="flex-1 overflow-y-auto custom-scrollbar">
             <div className="space-y-4">
             {historyLogs.length === 0 ? (
                 <div className="text-sm text-gray-300 italic">No activity yet...</div>
             ) : (
                 [...historyLogs].reverse().map((log, index) => (
-                <div key={index} className="flex justify-between items-center gap-4 animate-bubble hover:bg-gray-50/50 p-1 rounded-lg transition-colors">
-                    {/* 1. 시간: 고정폭 유지 */}
+                <div key={index} className={`flex justify-between items-center gap-4 p-1 rounded-lg transition-colors ${
+                  log.meta?.type === "FINAL_RESULT" ? "bg-green-50/50" : "hover:bg-gray-50/50"
+                }`}>
                     <span className="text-[12px] text-gray-400 font-medium w-12 flex-shrink-0 text-left">
                         {log.meta?.time}
                     </span>
 
-                    {/* 2. 역할: 보라색 포인트 + 굵기 추가 */}
-                    <span className="text-[12px] text-[#1a4d3a] font-bold w-18 flex-shrink-0 text-left truncate">
-                        {log.role}
+                    <span className={`text-[12px] font-bold w-18 flex-shrink-0 text-left truncate ${
+                      log.meta?.type === "FINAL_RESULT" ? "text-green-600" : "text-[#1a4d3a]"
+                    }`}>
+                        {log.meta?.type === "FINAL_RESULT" ? "RESULT" : log.role}
                     </span>
 
-                    {/* 3. 내용: 남는 공간 전부 사용 (flex-1) */}
                     <div className="flex-1 min-w-0">
                         <span className="text-sm text-gray-600 font-medium block truncate text-left">
                             {log.content}
                         </span>
                     </div>
 
-                    {/* 4. 가격: 우측 정렬 및 강조 */}
                     <span className="font-bold text-[#1a4d3a] flex-shrink-0 min-w-[70px] text-right">
-                        {formatPrice(log.meta?.price)}
+                        {formatPrice(getPriceFromLog(log))}
                     </span>
                 </div>
                 ))

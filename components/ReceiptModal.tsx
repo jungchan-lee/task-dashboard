@@ -77,14 +77,15 @@ export default function ReceiptModal({ isOpen, onClose, message }: ReceiptModalP
             <div className="mt-6 pt-4 border-t-2 border-dashed border-gray-100 flex-shrink-0">
             <div className="flex justify-between items-center mb-4">
                 <div className="text-left">
-                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Status</p>
-                {/* 🟢 COMPLETED 대신 실제 status 출력 */}
-                <p className={`text-lg font-black uppercase ${
+                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Status</p>
+                  {/* 🟢 SUCCESS면 COMPLETED, FAILED면 REJECTED로 출력 */}
+                  <p className={`text-lg font-black uppercase ${
                     meta?.status === "SUCCESS" ? "text-blue-600" : 
                     meta?.status === "FAILED" ? "text-red-500" : "text-[#1a4d3a]"
-                }`}>
-                    {meta?.status || "COMPLETED"}
-                </p>
+                  }`}>
+                    {meta?.status === "SUCCESS" ? "COMPLETED" : 
+                    meta?.status === "FAILED" ? "REJECTED" : "COMPLETED"}
+                  </p>
                 </div>
                 <div className="text-right text-[10px] text-gray-300">
                 {/* meta.time이 있다면 그걸 쓰고, 없으면 현재 날짜 출력 */}

@@ -7,6 +7,7 @@ export type Message = {
     price?: number;
     action?: string;
     time?: string;
+    receivers?: string[];
     // FINAL_RESULT 전용 데이터
     status?: string;       // "SUCCESS" | "FAILED"
     report?: string;       // 전체 리포트 텍스트

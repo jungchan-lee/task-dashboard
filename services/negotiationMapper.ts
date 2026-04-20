@@ -23,7 +23,8 @@ export class NegotiationMapper {
           role: data.sender,
           content: data.content,
           meta: {
-          type: "TURN_UPDATE" 
+          type: "TURN_UPDATE",
+          receivers: data.receiver // 🟢 수신자 배열 전달 
         }
         };
 
