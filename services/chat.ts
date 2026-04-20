@@ -1,6 +1,6 @@
 // services/chat.ts
 
-const WS_URL = "ws://beverlee-lazulitic-lustfully.ngrok-free.dev/negotiation/ws/negotiate";
+const WS_URL = "wss://beverlee-lazulitic-lustfully.ngrok-free.dev/negotiation/ws/negotiate";
 
 let socket: WebSocket | null = null;
 
