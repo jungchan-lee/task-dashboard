@@ -65,7 +65,7 @@ export default function ReceiptModal({ isOpen, onClose, message }: ReceiptModalP
               return (
                 <div key={idx} className="text-[13px] text-gray-600 leading-snug flex gap-2">
                   {(trimmedLine.startsWith('-') || trimmedLine.match(/^\d\./)) && (
-                    <span className="text-[#1a4d3a] font-bold">•</span>
+                    <span className="text-[#1a4d3a] font-bold"></span>
                   )}
                   <p dangerouslySetInnerHTML={{ __html: formattedLine }} className="flex-1" />
                 </div>
