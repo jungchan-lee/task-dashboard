@@ -24,3 +24,53 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  transition: all 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.5);
+}
+
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0; }
+  40% { opacity: 1; }
+}
+
+.loading-dot {
+  animation: blink 1.4s infinite;
+}
+
+.loading-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes bubbleUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9); /* 더 아래에서, 약간 작게 시작 */
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1); /* 제자리로 오면서 원래 크기로 */
+  }
+}
+
+.animate-bubble {
+  /* cubic-bezier를 넣으면 훨씬 생동감 있게 올라옵니다 */
+animation: bubbleUp 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;}

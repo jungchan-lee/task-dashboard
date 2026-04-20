@@ -1,65 +1,98 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState } from "react";
+import Sidebar from "../components/Sidebar";
+import MessageList from "../components/MessageList";
+import ChatInput from "../components/ChatInput";
+import { useChat } from "../services/useChat";
+import { connectSocket, sendSocketMessage } from "../services/chat";
+import { NegotiationMapper } from "../services/negotiationMapper";
+import { Group } from "@/types/negotiation";
+import { WSMessage } from "@/types/negotiationResponse";
+import NegotiationTimeline from "@/components/NegotiationTimeLine";
+
+export default function Page() {
+  const { messages, sendMessage, handleSocketResponse } = useChat();
+  const [groups, setGroups] = useState<Group[]>([]);
+
+  useEffect(() => {
+    connectSocket((data: WSMessage) => {
+      
+    // 1️⃣ [핵심] 모든 데이터를 매퍼로 변환 시도
+    const message = NegotiationMapper.toMessage(data);
+
+    if (message) {
+      // 2️⃣ 채팅창과 사이드바가 공유하는 messages 배열 업데이트
+      // handleSocketResponse 내부에서 setMessages((prev) => [...prev, msg])가 실행되어야 함
+      handleSocketResponse(data); 
+
+      // 3️⃣ 사이드바용 그룹 데이터 업데이트 (필요한 경우만)
+      setGroups((prev) => {
+        if (prev.length === 0 && data.type === "INFO") {
+          return [NegotiationMapper.createInitialGroup(data)];
+        }
+        if (prev.length > 0) {
+          const updated = [...prev];
+          updated[0] = NegotiationMapper.appendMessage(updated[0], message);
+          return updated;
+        }
+        return prev;
+      });
+    }
+
+    });
+  }, []);
+
+  const handleSend = (text: string) => {
+    sendMessage(text);
+    sendSocketMessage(text);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="w-full h-screen bg-[#f3f4f6] flex flex-col">
+      
+      {/* 🔹 상단 바 */}
+      <div className="h-16 flex items-center justify-between px-6 bg-[#effdf6] backdrop-blur-sm border-b border-black/5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-green-200 flex items-center justify-center font-bold">
+            AM
+          </div>
+          <div className="font-semibold text-gray-800">
+            Agent Market
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="text-sm text-gray-600 font-medium">
+          NEGOTIATOR ALPHA
         </div>
-      </main>
+      </div>
+
+      {/* ✅ 상단 빈 영역 (나중에 타임라인/그래프 들어갈 자리) */}
+      <NegotiationTimeline messages={messages} />
+  
+      {/* ✅ 메인 영역 (4:6) */}
+      <div className="flex flex-1 overflow-hidden p-6 gap-6 bg-[#f6faf9]">
+  
+      {/* 🔹 좌측 */}
+      <div className="w-2/5 bg-white rounded-2xl shadow-sm overflow-y-auto">
+        <Sidebar messages={messages} />
+      </div>
+
+      {/* 🔹 우측 */}
+      <div className="w-3/5 flex flex-col bg-white rounded-2xl shadow-sm overflow-hidden">
+        
+        {/* 채팅 영역 */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <MessageList messages={messages} />
+        </div>
+
+        {/* 입력창 */}
+        <div className="px-4 py-3 bg-white">
+          <ChatInput onSend={handleSend} />
+        </div>
+      </div>
+
+    </div>
     </div>
   );
 }
