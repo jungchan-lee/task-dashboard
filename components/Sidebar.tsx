@@ -141,42 +141,47 @@ export default function Sidebar({ messages }: SidebarProps) {
         {/* 히스토리 로그 섹션 */}
         <div className="flex-1 flex flex-col min-h-0 px-1">
           <div className="text-[11px] font-bold text-gray-400 mb-4 tracking-widest flex-shrink-0">
-              HISTORY LOG
+            HISTORY LOG
           </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
             <div className="space-y-4">
-            {historyLogs.length === 0 ? (
+              {historyLogs.filter(log => log.meta?.type !== "FINAL_RESULT").length === 0 ? (
                 <div className="text-sm text-gray-300 italic">No activity yet...</div>
-            ) : (
-                [...historyLogs].reverse().map((log, index) => (
-                <div key={index} className={`flex justify-between items-center gap-4 p-1 rounded-lg transition-colors ${
-                  log.meta?.type === "FINAL_RESULT" ? "bg-green-50/50" : "hover:bg-gray-50/50"
-                }`}>
-                    <span className="text-[12px] text-gray-400 font-medium w-12 flex-shrink-0 text-left">
+              ) : (
+                // 1. FINAL_RESULT가 아닌 로그만 필터링한 뒤 
+                // 2. 역순으로 정렬하여 렌더링
+                historyLogs
+                  .filter(log => log.meta?.type !== "FINAL_RESULT")
+                  .slice() // 원본 배열 복사
+                  .reverse()
+                  .map((log, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center gap-4 p-1 rounded-lg transition-colors hover:bg-gray-50/50"
+                    >
+                      <span className="text-[12px] text-gray-400 font-medium w-12 flex-shrink-0 text-left">
                         {log.meta?.time}
-                    </span>
+                      </span>
 
-                    <span className={`text-[12px] font-bold w-18 flex-shrink-0 text-left truncate ${
-                      log.meta?.type === "FINAL_RESULT" ? "text-green-600" : "text-[#1a4d3a]"
-                    }`}>
-                        {log.meta?.type === "FINAL_RESULT" ? "RESULT" : log.role}
-                    </span>
+                      <span className="text-[12px] font-bold w-18 flex-shrink-0 text-left truncate text-[#1a4d3a]">
+                        {log.role}
+                      </span>
 
-                    <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0">
                         <span className="text-sm text-gray-600 font-medium block truncate text-left">
-                            {log.content}
+                          {log.content}
                         </span>
-                    </div>
+                      </div>
 
-                    <span className="font-bold text-[#1a4d3a] flex-shrink-0 min-w-[70px] text-right">
+                      <span className="font-bold text-[#1a4d3a] flex-shrink-0 min-w-[70px] text-right">
                         {formatPrice(getPriceFromLog(log))}
-                    </span>
-                </div>
-                ))
-            )}
+                      </span>
+                    </div>
+                  ))
+              )}
             </div>
-        </div>
+          </div>
         </div>
       </div>
     </div>
